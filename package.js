@@ -8,9 +8,9 @@ Package.describe({
 
 Package.onUse(function(api) {
   api.use([
-    "ccorcos:react",
-    "coffeescript",
-    "reactive-var"
+    "ccorcos:react@0.0.1",
+    "coffeescript@1.0.5",
+    "reactive-var@1.0.4"
   ]);
   api.imply([
     "ccorcos:react",
