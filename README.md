@@ -18,7 +18,7 @@ This mixin with convert any props into reactive variables `this.rprops` so you c
 ```js
 getMeteorState: {
   post() {
-    return Posts.findOne(this.rprops.postId)
+    return Posts.findOne(this.rprops.postId.get())
   }
 }
 ```
