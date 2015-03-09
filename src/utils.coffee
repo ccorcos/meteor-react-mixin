@@ -49,15 +49,41 @@ linkVar = (reactiveVar) ->
       @forceUpdate()
   }
 
+# create a reactiveVar from a sessionVar to maintain state across code-pushes and component unmounts
+sessionVar = (sessionString) ->
+  if Meteor.isClient
+    # bind the reactiveVar both ways
+    x = new ReactiveVar(Session.get(sessionString))
+
+    Tracker.autorun (c) =>
+      @computations.push(c)
+      value = Session.get(sessionString)
+      unless c.firstRun
+        x.set(value)
+
+    Tracker.autorun (c) =>
+      @computations.push(c)
+      value = x.get()
+      unless c.firstRun
+        Session.set(sessionString, value)
+
+    return x
+  else
+    console.warn "Not sure how to support Session variable binding on the server..."
+
 React.MeteorMixin =
+
+
   componentWillMount: ->
     # Create an object of reactive variables for the props. We can use these in
     # getMeteorState to trigger state updates reactively when the props change.
     reactiveProps(this)
     @linkVar = linkVar.bind(this)
-    
+
     # hold all computations so we can stop them in componentWillUnmount
     @computations = []
+
+    @sessionVar = sessionVar.bind(this)
 
     # set the state based on getMeteorState
     # when server-side rendering, we don't need all this reactivity stuff.

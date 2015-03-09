@@ -63,6 +63,18 @@ React.createClassFactory
     )
 ```
 
+Another helpful function is `this.sessionVar` which creates a ReactiveVar that binds to a Session variable. This way, the state of your app will persist across hot-code pushes and the state of your components will be maintained between mounts and unmounts.
+
+```coffee
+React.createClassFactory
+  displayName: 'Search'
+  mixins: [React.MeteorMixin, React.addons.PureRenderMixin]
+  getMeteorState:
+    searchVar: -> @sessionVar('searchText')
+  render: ->
+    # ...
+```
+
 This mixin has `getMeteorSubs` which runs your subscriptions within an autorun so they will be automatically stopped once `componentWillUnmount` is called.
 
 
