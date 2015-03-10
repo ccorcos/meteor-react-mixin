@@ -88,10 +88,11 @@ Factories are convenient if you don't want to use JSX and saves you from using `
 `React.renderBody` is a simple wrapper that renders to the body of the document. This works nicely with [`meteorhacks:flow-router`](https://github.com/meteorhacks/flow-router).
 
 ```js
-FlowRouter.route('/', 
-  action(params, queryParams) {
+FlowRouter.route('/', {
+  action: function(params, queryParams) {
     Main = React.classes.Main
     React.renderBody(<Main/>)
+  }
 });
 ```
 
