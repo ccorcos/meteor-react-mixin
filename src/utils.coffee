@@ -32,13 +32,13 @@ Ex2:
   Search results gets the search query reactive variable, and looks up the array of posts. and passes those id's down.
 ###
 
-reactiveProps = (context) ->
-  context.rprops = {}
-  for propName, propValue of context.props
+reactiveProps = () ->
+  @rprops = {}
+  for propName, propValue of @props
     if propValue instanceof ReactiveVar
-      context.rprops[propName] = propValue
+      @rprops[propName] = propValue
     else
-      context.rprops[propName] = new ReactiveVar(propValue)
+      @rprops[propName] = new ReactiveVar(propValue)
 
 # a function like linkState but for reactive variables
 linkVar = (reactiveVar) ->
@@ -71,120 +71,136 @@ sessionVar = (sessionString) ->
   else
     console.warn "Not sure how to support Session variable binding on the server..."
 
+
+# this function gets a function that returns subscriptions.
+# it will run them within an autorun and keep track of whether
+# or not this sub is ready
+startSubs = (func) ->
+  if Meteor.isClient
+    # wrap in an autorun to automatically stop on componentWillUnmount
+    Tracker.autorun (c) =>
+      @computations.push(c)
+      sub = func()
+      if _.isArray(sub)
+        @subs.concat(sub)
+        sub.map(s) =>
+          Tracker.autorun (sc) =>
+            @computations.push(sc)
+            r = s.ready()
+            @subsDep.changed()
+      else
+        @subs.push(sub)
+        Tracker.autorun (sc) =>
+          @computations.push(sc)
+          r = sub.ready()
+          @subsDep.changed()
+  else
+    # just run the subscriptions on the server
+    func()
+
+  return
+
+trackSubsReady = ->
+  @initialState?.subsReady = true
+  if Meteor.isClient
+    # autorun to check if subs are ready
+    # rerun everytime something is added to the @subs array
+    Tracker.autorun (c) =>
+      @computations.push(c)
+      @subsDep.depend()
+      ready = true
+      if @subs.length > 0
+        ready = @subs.map((sub) -> sub.ready()).reduce((a,b) -> a and b)
+      if c.firstRun
+        # update the initialState appropriately
+        @initialState?.subsReady = ready
+      else
+        # if the readiness changes, then update the state
+        # if a sub starts and finished before an entire flush cycle,
+        # then the state never updates, so we have to check if there are other updates
+        if @state.subsReady != ready or Object.keys(@partialState).length > 0
+          @partialState.subsReady = ready
+          @updateState.changed()
+    
+
+startMeteorState = ->
+  if Meteor.isClient
+    # set the state based on getMeteorState
+    if @getMeteorState
+      # queue up all the state changes in partialState
+      # and then all at once during afterFlush, we'll call setState
+      for name, func of @getMeteorState
+        # fine-grained reactivity
+        do (name, func) =>
+          Tracker.autorun (c) =>
+            @computations.push(c)
+            value = func.bind(this)()
+            if c.firstRun
+              @initialState?[name] = value
+            else
+              @partialState[name] = value
+              @updateState.changed()
+  else
+    # server
+    for name,func of @getMeteorState
+      @initialState[name] = func.bind(this)()
+
+
 React.MeteorMixin =
   componentWillMount: ->
     # Create an object of reactive variables for the props. We can use these in
     # getMeteorState to trigger state updates reactively when the props change.
-    reactiveProps(this)
+    reactiveProps.bind(this)()
     @linkVar = linkVar.bind(this)
-
     # hold all computations so we can stop them in componentWillUnmount
     @computations = []
-
     @sessionVar = sessionVar.bind(this)
 
-    partialState = {}
-    initialState = {}
-
+    # on firstRun, we set the initial state
+    @initialState = {}
+    # partial state is queued and run afterFlush
+    @partialState = {}
+    # an array of all subs
+    @subs = []
 
     if Meteor.isClient
       @updateState = new Tracker.Dependency()
+      @subsDep = new Tracker.Dependency()
 
-      # start meteor subscriptions
-      initialState.subsReady = true
+    @startMeteorState = startMeteorState.bind(this)
+    @startMeteorState()
 
-      if @getMeteorSubs
-        sub = null
-        # wrap in an autorun to automatically stop on componentWillUnmount
-        Tracker.autorun (c) =>
-          @computations.push(c)
-          sub = @getMeteorSubs()
+    # this can be used for infinite scrolling -- making new subscriptions 
+    # after mount. This should also alter the subsReady.
+    @startSubs = startSubs.bind(this)
+    if @getMeteorSubs
+      @startSubs(@getMeteorSubs)
 
-        # if we have some subscriptions set the initial state appropriately
-        # and create a reactiveVar bound to a state
-        if sub
-          initialState.subsReady = false
-          
-          ready = false
-          # autorun to check if subs are ready
-          # set this ready variable to the initial readiness
-          Tracker.autorun (c) =>
-            @computations.push(c)
-            ready = true
-            if _.isArray(sub)
-              for s in sub
-                unless s.ready()
-                  ready = false
-            else if sub.ready
-              unless sub.ready()
-                ready = false
-            else
-              console.warn "Please return a subscription object or an array of subscriptions"
+    @trackSubsReady = trackSubsReady.bind(this)
+    @trackSubsReady()
 
-            if c.firstRun
-              # update the initialState appropriately
-              initialState.subsReady = ready
-            else
-              # otherwise, update the reactive variable
-              # we don't call updateState.changed() here else
-              # it would happen anytime one of the many subscriptions became ready
-              @subsReady.set(ready)
-              
-          @subsReady = new ReactiveVar(ready)
+    # This is where we update the state all at once afterFlush.
+    # However, during the initial page load, afterflush gets called
+    # after componentWillMount and Tracker.flush doesnt work because
+    # we're already flushing. So on firstRun, we set the state manually.
+    Tracker.autorun (c) =>
+      @computations.push(c)
+      @updateState.depend()
+      Tracker.afterFlush () =>
+        if Object.keys(@partialState).length > 0
+          if (@initialState?.subsReady or @partialState.subsReady or @state?.subsReady) and (@partialState.subsReady isnt false)
+            # hold off on all rerenders while subscription waiting.
+            # this way we dont get a bunch od re-renders while subscriptions
+            # are coming in
+            @setState(@partialState)
+            @partialState = {}
 
-          Tracker.autorun (c) =>
-            @computations.push(c)
-            r = @subsReady.get()
-            unless c.firstRun
-              partialState.subsReady = r
-              @updateState.changed()
 
-      # set the state based on getMeteorState
-      # when server-side rendering, we don't need all this reactivity stuff.
-      if @getMeteorState
-        # queue up all the state changes in partialState
-        # and then all at once during afterFlush, we'll call setState
+    # set initial state if there is something to set
+    if Object.keys(@initialState).length > 0
+      @setState(@initialState)
+    @initialState = null
 
-        # fine-grained reactivity
-        for name,func of @getMeteorState
-          do (name, func) =>
-            Tracker.autorun (c) =>
-              @computations.push(c)
-              value = func.bind(this)()
-              if c.firstRun
-                initialState[name] = value
-              else
-                partialState[name] = value
-                @updateState.changed()
-
-      # This is where we update the state all at once afterFlush.
-      # However, during the initial page load, afterflush gets called
-      # after componentWillMount and Tracker.flush doesnt work because
-      # we're already flushing. So on firstRun, we set the state manually.
-      Tracker.autorun (c) =>
-        @computations.push(c)
-        @updateState.depend()
-        Tracker.afterFlush () =>
-          if Object.keys(partialState).length > 0
-            if @subsReady
-              # hold off on all rerenders while subscription waiting.
-              if @subsReady.get()
-                @setState(partialState)
-                partialState = {}
-            else
-              @setState(partialState)
-              partialState = {}
-
-      if Object.keys(initialState).length > 0
-        @setState(initialState)
-      initialState = null
-
-    else
-      # server
-      partialState = {}
-      for name,func of @getMeteorState
-        partialState[name] = func.bind(this)()
-      @setState(partialState)
 
   componentWillReceiveProps: (nextProps)->
     for propName, propValue of nextProps
