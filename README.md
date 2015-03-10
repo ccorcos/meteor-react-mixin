@@ -156,7 +156,10 @@ If an item is clicked, this function is called with the item.
 
 The number of pixels from the bottom when loadMore gets called.
 
+## Examples
+
+The best way to figure this stuff out is to check out the examples. You will also need to either clone my other repos parallel with this package (for the symlinks to work) or just remove the packages symlinks and download the packages from Atmosphere. I'll leave the symlinks though because it helps me debug.
+
 ## To Do
 
-- animation
 - fastRender (SSR)
