@@ -39,6 +39,9 @@ React.createClassFactory
     postIds: -> 
       posts = Posts.find({}, {sort:{name: 1, date:-1}, fields:{_id:1}}).fetch()
       _.pluck posts, '_id'
+    canLoadMore: -> 
+      @getMeteorState.postIds().length >= Session.get('postsLimit')
+
 
   getMeteorSubs: ->
     CacheSubs.subscribe('posts', Session.get('postsLimit'))
@@ -84,7 +87,7 @@ React.createClassFactory
         renderItem: @renderItem
         renderEmpty: @renderEmpty
         renderLoading: @renderLoading
-        canLoadMore: @state.postIds.length >= Session.get('postsLimit')
+        canLoadMore: @state.canLoadMore
         isLoading: not @state.subsReady
         loadMore: @loadMore
         onClick: @clickPost
