@@ -71,6 +71,10 @@ sessionVar = (sessionString) ->
   else
     console.warn "Not sure how to support Session variable binding on the server..."
 
+sessionVars = (obj) ->
+  @vars = {}
+  for name, sessionString of obj
+    @vars[name] = @sessionVar(sessionString)
 
 # this function gets a function that returns subscriptions.
 # it will run them within an autorun and keep track of whether
@@ -159,6 +163,9 @@ React.MeteorMixin =
     # hold all computations so we can stop them in componentWillUnmount
     @computations = []
     @sessionVar = sessionVar.bind(this)
+
+    @sessionVars = sessionVars.bind(this)
+    @sessionVars(@getSessionVars)
 
     # on firstRun, we set the initial state
     @initialState = {}

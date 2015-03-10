@@ -13,19 +13,19 @@ N_POSTS = 20
 N_INC = 5
 N_MINUTES = 0.1
 
-Session.setDefault('postsLimit', N_POSTS)
+Session.setDefault('home.postsLimit', N_POSTS)
 
-postLimitTimerId = null
+postsLimitTimerId = null
 Tracker.autorun (c) ->
-  postsLimit = Session.get('postsLimit')
+  postsLimit = Session.get('home.postsLimit')
   if postsLimit isnt N_POSTS
     # reset the posts after some time
     console.log "new timer"
-    Meteor.clearTimeout(postLimitTimerId)
-    postLimitTimerId = Meteor.setTimeout((()->
+    Meteor.clearTimeout(postsLimitTimerId)
+    postsLimitTimerId = Meteor.setTimeout((()->
       console.log "reset"
-      Session.set('postsLimit', N_POSTS)
-      Meteor.clearTimeout(postLimitTimerId)
+      Session.set('home.postsLimit', N_POSTS)
+      Meteor.clearTimeout(postsLimitTimerId)
     ), 1000*60*N_MINUTES)
 
 # autorun with a timer up here to reset periodically
@@ -35,22 +35,25 @@ React.createClassFactory
   displayName: "Home"
   mixins: [React.MeteorMixin, React.addons.PureRenderMixin]
 
+  getSessionVars:
+    postsLimit: 'home.postsLimit'
+
   getMeteorState:
     postIds: -> 
       posts = Posts.find({}, {sort:{name: 1, date:-1}, fields:{_id:1}}).fetch()
       _.pluck posts, '_id'
     canLoadMore: -> 
-      @getMeteorState.postIds().length >= Session.get('postsLimit')
+      @getMeteorState.postIds().length >= @vars.postsLimit.get()
 
 
   getMeteorSubs: ->
-    CacheSubs.subscribe('posts', Session.get('postsLimit'))
+    CacheSubs.subscribe('posts', @vars.postsLimit.get())
 
   loadMore: (nItemsCurrent)->
     # postsLimit is periodically reset. if its reset but we have cached
     # posts, we want to increment based on the current number of items.
     console.log "load more"
-    Session.set('postsLimit',  nItemsCurrent + N_INC)
+    @vars.postsLimit.set(nItemsCurrent + N_INC)
 
   renderItems: (children, onScroll) -> 
     # make sure to add props!
