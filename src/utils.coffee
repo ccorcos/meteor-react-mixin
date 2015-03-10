@@ -71,6 +71,9 @@ sessionVar = (sessionString) ->
   else
     console.warn "Not sure how to support Session variable binding on the server..."
 
+# This function binds sessionVars to the this.vars object. This all happens before getMeteorSubs or getMeteorState
+# This is convenient because it allows you to bind a local namespace to a global Session namespace. This does not
+# reactively update the state though. This is strictly a helper for namespacing
 sessionVars = (obj) ->
   @vars = {}
   for name, sessionString of obj

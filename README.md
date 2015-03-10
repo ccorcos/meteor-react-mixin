@@ -75,6 +75,23 @@ React.createClassFactory
     # ...
 ```
 
+`this.getSessionVars` is a helper which uses `this.sessionVar` to bind Session variables to `this.vars`. This happens before `getMeteorSubs` and `getMeteorState` so you can use `this.vars` within those functions. This does not bind anything to `this.state`. The purpose of this is entirely to separate the global Session namespace from the component-level namespace. For example, here we separate the the 'home.postsLimit' Session variable from `this.vars.postLimit`.
+
+```coffee
+  getSessionVars:
+    postsLimit: 'home.postsLimit'
+
+  getMeteorState:
+    postIds: -> 
+      posts = Posts.find({}, {sort:{name: 1, date:-1}, fields:{_id:1}}).fetch()
+      _.pluck posts, '_id'
+    canLoadMore: -> 
+      @getMeteorState.postIds().length >= @vars.postsLimit.get()
+
+  getMeteorSubs: ->
+    CacheSubs.subscribe('posts', @vars.postsLimit.get())
+```
+
 This mixin has `getMeteorSubs` which runs your subscriptions within an autorun so they will be automatically stopped once `componentWillUnmount` is called. There is also a `this.subsReady` state variable that will be true once all subscriptions are ready. This also blocks the component from re-rendering until the subscriptions are ready. This prevents re-renders as subscriptions incrementally come in.
 
 ### React.createClassFactory
