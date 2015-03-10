@@ -25,7 +25,9 @@ React.createClassFactory
         (Title {}, 'Home')
       )
       (Content {header: true},
-        (PostList {postIds: @state.postIds})
+        (PostList {postIds: @state.postIds, loading: not @state.subsReady})
       )
     )
+
+# how does infinite scroll work betweenc components?
 
