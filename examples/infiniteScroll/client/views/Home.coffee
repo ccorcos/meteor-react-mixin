@@ -13,40 +13,44 @@ N_POSTS = 20
 N_INC = 5
 N_MINUTES = 0.1
 
+# reset a session variable some time after the last time it changed.
+resetSessionVar = (sessionString, resetValue, ms) ->
+  timerId = null
+  Tracker.autorun (c) ->
+    value = Session.get(sessionString)
+    if value isnt N_POSTS
+      # reset the posts after some time
+      console.log "new timer"
+      Meteor.clearTimeout(timerId)
+      timerId = Meteor.setTimeout((()->
+        console.log "reset"
+        Session.set(sessionString, resetValue)
+        Meteor.clearTimeout(timerId)
+      ), ms)
+
 Session.setDefault('home.postsLimit', N_POSTS)
-
-postsLimitTimerId = null
-Tracker.autorun (c) ->
-  postsLimit = Session.get('home.postsLimit')
-  if postsLimit isnt N_POSTS
-    # reset the posts after some time
-    console.log "new timer"
-    Meteor.clearTimeout(postsLimitTimerId)
-    postsLimitTimerId = Meteor.setTimeout((()->
-      console.log "reset"
-      Session.set('home.postsLimit', N_POSTS)
-      Meteor.clearTimeout(postsLimitTimerId)
-    ), 1000*60*N_MINUTES)
-
-# autorun with a timer up here to reset periodically
-# subs manager should remove "expireIn" AFTER stop has been called!ca
+resetSessionVar('home.postsLimit', N_POSTS, 1000*60*N_MINUTES)
 
 React.createClassFactory
   displayName: "Home"
   mixins: [React.MeteorMixin, React.addons.PureRenderMixin]
 
+  # create a local namespace for postsLimit
   getSessionVars:
     postsLimit: 'home.postsLimit'
 
+  # reactively set this.state
   getMeteorState:
     postIds: -> 
+      # fetch and return only the _ids for fine-grained reactivity
       posts = Posts.find({}, {sort:{name: 1, date:-1}, fields:{_id:1}}).fetch()
       _.pluck posts, '_id'
     canLoadMore: -> 
+      # depend on postIds!
       @getMeteorState.postIds().length >= @vars.postsLimit.get()
 
-
   getMeteorSubs: ->
+    # use subs-manager to cache subscriptions
     CacheSubs.subscribe('posts', @vars.postsLimit.get())
 
   loadMore: (nItemsCurrent)->
