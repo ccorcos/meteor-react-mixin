@@ -72,8 +72,6 @@ sessionVar = (sessionString) ->
     console.warn "Not sure how to support Session variable binding on the server..."
 
 React.MeteorMixin =
-
-
   componentWillMount: ->
     # Create an object of reactive variables for the props. We can use these in
     # getMeteorState to trigger state updates reactively when the props change.
@@ -85,15 +83,67 @@ React.MeteorMixin =
 
     @sessionVar = sessionVar.bind(this)
 
-    # set the state based on getMeteorState
-    # when server-side rendering, we don't need all this reactivity stuff.
-    if @getMeteorState
-      if Meteor.isClient
+    partialState = {}
+    initialState = {}
+
+
+    if Meteor.isClient
+      @updateState = new Tracker.Dependency()
+
+      # start meteor subscriptions
+      initialState.subsReady = true
+
+      if @getMeteorSubs
+        sub = null
+        # wrap in an autorun to automatically stop on componentWillUnmount
+        Tracker.autorun (c) =>
+          @computations.push(c)
+          sub = @getMeteorSubs()
+
+        # if we have some subscriptions set the initial state appropriately
+        # and create a reactiveVar bound to a state
+        if sub
+          initialState.subsReady = false
+          
+          ready = false
+          # autorun to check if subs are ready
+          # set this ready variable to the initial readiness
+          Tracker.autorun (c) =>
+            @computations.push(c)
+            ready = true
+            if _.isArray(sub)
+              for s in sub
+                unless s.ready()
+                  ready = false
+            else if sub.ready
+              unless sub.ready()
+                ready = false
+            else
+              console.warn "Please return a subscription object or an array of subscriptions"
+
+            if c.firstRun
+              # update the initialState appropriately
+              initialState.subsReady = ready
+            else
+              # otherwise, update the reactive variable
+              # we don't call updateState.changed() here else
+              # it would happen anytime one of the many subscriptions became ready
+              @subsReady.set(ready)
+              
+          @subsReady = new ReactiveVar(ready)
+
+          Tracker.autorun (c) =>
+            @computations.push(c)
+            r = @subsReady.get()
+            unless c.firstRun
+              partialState.subsReady = r
+              @updateState.changed()
+
+      # set the state based on getMeteorState
+      # when server-side rendering, we don't need all this reactivity stuff.
+      if @getMeteorState
         # queue up all the state changes in partialState
         # and then all at once during afterFlush, we'll call setState
-        partialState = {}
-        initialState = {}
-        @updateState = new Tracker.Dependency()
 
         # fine-grained reactivity
         for name,func of @getMeteorState
@@ -107,33 +157,34 @@ React.MeteorMixin =
                 partialState[name] = value
                 @updateState.changed()
 
-        @setState(initialState)
-        initialState = null
-        
-        # This is where we update the state all at once afterFlush.
-        # However, during the initial page load, afterflush gets called
-        # after componentWillMount and Tracker.flush doesnt work because
-        # we're already flushing. So on firstRun, we set the state manually.
-        Tracker.autorun (c) =>
-          @computations.push(c)
-          @updateState.depend()
-          Tracker.afterFlush () =>
-            if Object.keys(partialState).length > 0
+      # This is where we update the state all at once afterFlush.
+      # However, during the initial page load, afterflush gets called
+      # after componentWillMount and Tracker.flush doesnt work because
+      # we're already flushing. So on firstRun, we set the state manually.
+      Tracker.autorun (c) =>
+        @computations.push(c)
+        @updateState.depend()
+        Tracker.afterFlush () =>
+          if Object.keys(partialState).length > 0
+            if @subsReady
+              # hold off on all rerenders while subscription waiting.
+              if @subsReady.get()
+                @setState(partialState)
+                partialState = {}
+            else
               @setState(partialState)
               partialState = {}
 
-      else
-        partialState = {}
-        for name,func of @getMeteorState
-          partialState[name] = func.bind(this)()
-        @setState(partialState)
+      if Object.keys(initialState).length > 0
+        @setState(initialState)
+      initialState = null
 
-    # start meteor subscriptions
-    if @getMeteorSubs
-      if Meteor.isClient
-        Tracker.autorun (c) =>
-          @computations.push(c)
-          @getMeteorSubs()
+    else
+      # server
+      partialState = {}
+      for name,func of @getMeteorState
+        partialState[name] = func.bind(this)()
+      @setState(partialState)
 
   componentWillReceiveProps: (nextProps)->
     for propName, propValue of nextProps
