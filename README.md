@@ -13,7 +13,7 @@ This package contains a React Mixin and some utilies for using React with Meteor
 
 `React.MeteorMixin` allows you to tightly integrate Meteor with React. 
 
-This mixin with convert any props into reactive variables `this.rprops` so you can use tem with `getMeteorState` for fine-grained reactivity of the state. If a props is an instance of ReactiveVar, then it will be passed into rprops as you might expect.
+This mixin with convert any props into reactive variables `this.rprops` so you can use them with `getMeteorState` for fine-grained reactivity of the state. If a props is an instance of ReactiveVar, then it will be passed into rprops as you might expect.
 
 ```js
 getMeteorState: {
@@ -75,14 +75,26 @@ React.createClassFactory
     # ...
 ```
 
-This mixin has `getMeteorSubs` which runs your subscriptions within an autorun so they will be automatically stopped once `componentWillUnmount` is called.
-
+This mixin has `getMeteorSubs` which runs your subscriptions within an autorun so they will be automatically stopped once `componentWillUnmount` is called. There is also a `this.subsReady` state variable that will be true once all subscriptions are ready. This also blocks the component from re-rendering until the subscriptions are ready. This prevents re-renders as subscriptions incrementally come in.
 
 ### React.createClassFactory
 
 `React.createClassFactory` creates a class as you could expect, but also uses the display name to add the class to a global `React.classes` object and uses `React.createFactory` to add a factory of that class to a global `React.factories` object. This way, you can conveniently access you different classes from different files without polluting your global namespace. `React.createClassFactory` returns an array where the first element is the class and the second element is the factory of that class. 
 
-Factories are convenient if you don't want to use JSX and saves you from using `React.createElement` everywhere, especially for coffeescript.
+Factories are convenient if you don't want to use JSX and saves you from using `React.createElement` everywhere, especially for coffeescript. For example, in coffeescript, you might write like this.
+
+```coffee
+{Item} = React.factories
+{h2, p} = React.DOM
+
+React.createClassFactory
+  # ...
+  render: -> 
+    (Item {onClick: @props.onClick},
+      (h2 {}, @state.post.title)
+      (p {}, @state.post.user.username)
+    )
+```
 
 ### React.renderBody
 `React.renderBody` is a simple wrapper that renders to the body of the document. This works nicely with [`meteorhacks:flow-router`](https://github.com/meteorhacks/flow-router).
@@ -103,8 +115,48 @@ FlowRouter.route '/',
     React.renderBody Main()
 ```
 
+### InfiniteScroll
+
+This package also has a convenient infinitely scrolling component. Lets go through the props one by one.
+
+    items:         React.PropTypes.array.isRequired
+
+An array of items to render
+
+    renderItem:    React.PropTypes.func.isRequired
+
+A function that accepts one item and an onClick function and renders the item with the onClick prop hooked up.
+
+    renderItems:   React.PropTypes.func.isRequired
+
+A function that accepts an array of children and an onScroll function. It creates a scrollable div with a "scrollable" ref along with onScroll prop and renders the chilren inside.
+
+    renderEmpty:   React.PropTypes.func.isRequired
+    renderLoading: React.PropTypes.func
+
+Renders an empty / loading "item".
+
+    canLoadMore:   React.PropTypes.bool.isRequired
+
+If there are more items that can be loaded.
+
+    isLoading:     React.PropTypes.bool.isRequired
+
+If the subs aren't ready yet.
+
+    loadMore:      React.PropTypes.func
+
+A function to load more. Here its easiest to update a session variable that reactively updates the subscription.
+
+    onClick:       React.PropTypes.func
+
+If an item is clicked, this function is called with the item.
+
+    buffer:        React.PropTypes.number
+
+The number of pixels from the bottom when loadMore gets called.
+
 ## To Do
 
-- subscribe example
-- waitOn
+- animation
 - fastRender (SSR)
