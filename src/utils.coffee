@@ -100,6 +100,8 @@ startSubs = (func) ->
 
   return
 
+# This function will autorun checking if subs are ready and will
+# reactively update the state when all are ready
 trackSubsReady = ->
   @initialState?.subsReady = true
   if Meteor.isClient
@@ -121,6 +123,8 @@ trackSubsReady = ->
         if @state.subsReady != ready or Object.keys(@partialState).length > 0
           @partialState.subsReady = ready
           @updateState.changed()
+
+  return
     
 
 startMeteorState = ->

@@ -1,6 +1,6 @@
 Package.describe({
   name: "ccorcos:react-utils",
-  version: "0.0.3",
+  version: "0.0.4",
   summary: "React utils for Meteor",
   git: "https://github.com/ccorcos/meteor-react-utils",
 });
@@ -18,6 +18,7 @@ Package.onUse(function(api) {
   ]);
 
   api.addFiles([
-    "src/utils.coffee"
+    "src/utils.coffee",
+    "src/components/InfiniteScroll.coffee"
   ]);
 });

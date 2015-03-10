@@ -1,4 +1,3 @@
-
 Item = React.createFactory(Ionic.Item)
 {h2, p} = React.DOM
 
@@ -33,28 +32,4 @@ React.createClassFactory
     console.log "LoadingItem render"
     (Item {style:{textAlign:'center', borderBottom:0}}, 
       (Icon {icon:'load-b', spin:true, style:{fontSize:'25px'}})
-    )
-
-
-List = React.createFactory(Ionic.List)
-{PostItem, LoadingItem} = React.factories
-
-React.createClassFactory
-  displayName: 'PostList'
-  mixins: [React.addons.PureRenderMixin]
-
-  propTypes:
-    postIds: React.PropTypes.arrayOf(React.PropTypes.string).isRequired
-    onClick: React.PropTypes.func
-    loading: React.PropTypes.bool
-
-  render: -> 
-    console.log "PostList render"
-    (List {}, 
-      (@props.postIds.map (postId) =>
-        (PostItem {key: postId, postId: postId, onClick: => @props.onClick(postId)})
-      )
-      do => 
-        if this.props.loading
-          (LoadingItem())
     )
