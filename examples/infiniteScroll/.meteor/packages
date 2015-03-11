@@ -14,4 +14,4 @@ accounts-password
 coffeescript
 anti:fake
 reywood:publish-composite
-meteorhacks:subs-manager
+ccorcos:subs-cache

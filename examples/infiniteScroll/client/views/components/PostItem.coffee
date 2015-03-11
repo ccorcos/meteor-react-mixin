@@ -12,14 +12,14 @@ React.createClassFactory
   getMeteorState:
     post: ->
       post = Posts.findOne(@rprops.postId.get())
-      post.user = Meteor.users.findOne(post.userId)
+      post?.user = Meteor.users.findOne(post?.userId)
       return post
 
   render: -> 
     console.log "PostItem render"
     (Item {onClick: @props.onClick},
-      (h2 {}, @state.post.title)
-      (p {}, @state.post.user.username)
+      (h2 {}, @state.post?.title)
+      (p {}, @state.post?.user?.username)
     )
 
 Icon = React.createFactory(Ionic.Icon)

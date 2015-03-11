@@ -9,9 +9,13 @@ Icon = React.createFactory(Ionic.Icon)
 {h2, p} = React.DOM
 {PostItem, InfiniteScroll} = React.factories
 
+
+# For the sake of this demo, we'll reset the postsLimit after
+# 6 seconds. In practice, we should reset after a longer period
+# of time, or when the user takes some action.
 N_POSTS = 20
 N_INC = 5
-N_MINUTES = 0.1
+N_MINUTES = 0.1 
 
 # reset a session variable some time after the last time it changed.
 resetSessionVar = (sessionString, resetValue, ms) ->
@@ -31,6 +35,10 @@ resetSessionVar = (sessionString, resetValue, ms) ->
 Session.setDefault('home.postsLimit', N_POSTS)
 resetSessionVar('home.postsLimit', N_POSTS, 1000*60*N_MINUTES)
 
+subsCache = new SubsCache
+  expireAter: 5
+  cacheLimit: 1
+
 React.createClassFactory
   displayName: "Home"
   mixins: [React.MeteorMixin, React.addons.PureRenderMixin]
@@ -49,9 +57,11 @@ React.createClassFactory
       # depend on postIds!
       @getMeteorState.postIds().length >= @vars.postsLimit.get()
 
+
   getMeteorSubs: ->
-    # use subs-manager to cache subscriptions
-    CacheSubs.subscribe('posts', @vars.postsLimit.get())
+    console.log "get subs", @vars.postsLimit.get()
+    subsCache.subscribe('posts', @vars.postsLimit.get())
+    () -> subsCache.ready()
 
   loadMore: (nItemsCurrent)->
     # postsLimit is periodically reset. if its reset but we have cached

@@ -35,7 +35,7 @@ React.createClassFactory
     if d < @props.buffer and not @state.isLoading
       @props.loadMore?(@props.items.length)
       @setState({isLoading: true})
-
+    
   render: ->
     args = []
     if @props.items.length is 0 and not @props.canLoadMore

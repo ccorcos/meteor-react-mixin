@@ -78,61 +78,31 @@ sessionVars = (obj) ->
   @vars = {}
   for name, sessionString of obj
     @vars[name] = @sessionVar(sessionString)
-
-# this function gets a function that returns subscriptions.
-# it will run them within an autorun and keep track of whether
-# or not this sub is ready
-startSubs = (func) ->
-  if Meteor.isClient
-    # wrap in an autorun to automatically stop on componentWillUnmount
-    Tracker.autorun (c) =>
-      @computations.push(c)
-      sub = func()
-      if _.isArray(sub)
-        @subs.concat(sub)
-        sub.map(s) =>
-          Tracker.autorun (sc) =>
-            @computations.push(sc)
-            r = s.ready()
-            @subsDep.changed()
-      else
-        @subs.push(sub)
-        Tracker.autorun (sc) =>
-          @computations.push(sc)
-          r = sub.ready()
-          @subsDep.changed()
-  else
-    # just run the subscriptions on the server
-    func()
-
-  return
-
-# This function will autorun checking if subs are ready and will
-# reactively update the state when all are ready
-trackSubsReady = ->
-  @initialState?.subsReady = true
-  if Meteor.isClient
-    # autorun to check if subs are ready
-    # rerun everytime something is added to the @subs array
-    Tracker.autorun (c) =>
-      @computations.push(c)
-      @subsDep.depend()
-      ready = true
-      if @subs.length > 0
-        ready = @subs.map((sub) -> sub.ready()).reduce((a,b) -> a and b)
-      if c.firstRun
-        # update the initialState appropriately
-        @initialState?.subsReady = ready
-      else
-        # if the readiness changes, then update the state
-        # if a sub starts and finished before an entire flush cycle,
-        # then the state never updates, so we have to check if there are other updates
-        if @state.subsReady != ready or Object.keys(@partialState).length > 0
-          @partialState.subsReady = ready
-          @updateState.changed()
-
-  return
     
+startMeteorSubs = ->
+  if @getMeteorSubs
+    # run in reactive computation to stop the subscription(s) when theyre done
+    Tracker.autorun (c) =>
+      @computations.push(c)
+      # getMeteorSubs should return a reactive function to tell us if the sub(s) are ready
+      readyFunc = @getMeteorSubs()
+      # reactively update the subsReady state
+      Tracker.autorun =>   
+        ready = true         
+        try
+          ready = readyFunc()
+        catch e
+          console.warn("Did you forget to return a ready function from getMeteorSubs?")
+        if c.firstRun
+          # update the initialState appropriately
+          @initialState?.subsReady = ready
+        else
+          # if the readiness changes, then update the state
+          # if a sub starts and finished before an entire flush cycle,
+          # then the state never updates, so we have to check if there are other updates
+          if @state.subsReady != ready or Object.keys(@partialState).length > 0
+            @partialState.subsReady = ready
+            @updateState.changed()
 
 startMeteorState = ->
   if Meteor.isClient
@@ -155,7 +125,6 @@ startMeteorState = ->
     # server
     for name,func of @getMeteorState
       @initialState[name] = func.bind(this)()
-
 
 React.MeteorMixin =
   componentWillMount: ->
@@ -184,14 +153,8 @@ React.MeteorMixin =
     @startMeteorState = startMeteorState.bind(this)
     @startMeteorState()
 
-    # this can be used for infinite scrolling -- making new subscriptions 
-    # after mount. This should also alter the subsReady.
-    @startSubs = startSubs.bind(this)
-    if @getMeteorSubs
-      @startSubs(@getMeteorSubs)
-
-    @trackSubsReady = trackSubsReady.bind(this)
-    @trackSubsReady()
+    @startMeteorSubs = startMeteorSubs.bind(this)
+    @startMeteorSubs()
 
     # This is where we update the state all at once afterFlush.
     # However, during the initial page load, afterflush gets called
