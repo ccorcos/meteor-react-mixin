@@ -89,10 +89,38 @@ React.createClassFactory
       @getMeteorState.postIds().length >= @vars.postsLimit.get()
 
   getMeteorSubs: ->
-    CacheSubs.subscribe('posts', @vars.postsLimit.get())
+    sub = Meteor.subscribe('posts', @vars.postsLimit.get())
+    return () -> sub.ready()
 ```
 
-This mixin has `getMeteorSubs` which runs your subscriptions within an autorun so they will be automatically stopped once `componentWillUnmount` is called. There is also a `this.subsReady` state variable that will be true once all subscriptions are ready. This also blocks the component from re-rendering until the subscriptions are ready. This prevents re-renders as subscriptions incrementally come in.
+This mixin has `getMeteorSubs` which runs your subscriptions within an autorun so they will be automatically stopped once `componentWillUnmount` is called. You must return a reactive function that returns whether or not all subscriptions are ready. This will update the state variable `this.state.subsReady` and will block the component from re-rendering based on other state changes until subsReady is true. If you have multiple subscriptions, you should do something like this.
+
+```coffee
+  getMeteorSubs: ->
+    sub1 = Meteor.subscribe('post', postId)
+    sub2 = Meteor.subscribe('user', userId)
+    return () -> 
+      a = sub1.ready()
+      b = sub2.ready()
+      return a and b
+```
+
+This also works well with [`meteorhacks:subs-manager`](https://github.com/meteorhacks/subs-manager) or [`ccorcos:subs-cache`](https://github.com/ccorcos/meteor-subs-cache).
+
+```coffee
+subsCache = new SubsCache
+  expireAter: 5
+  cacheLimit: -1
+
+# {clip}
+
+  getMeteorSubs: ->
+    subsCache.subscribe('post', postId)
+    subsCache.subscribe('user', userId)
+    # more subscriptions...
+    subsCache.subscribe('comment', commentId)
+    return () -> subsCache.ready() # returns ready if ALL are ready
+```
 
 ### React.createClassFactory
 

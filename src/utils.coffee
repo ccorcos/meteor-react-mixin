@@ -165,13 +165,17 @@ React.MeteorMixin =
       @updateState.depend()
       Tracker.afterFlush () =>
         if Object.keys(@partialState).length > 0
+          # if the subsReady turns false, we can update that
+          # but we dont want to update anything else until subs are ready
+          if ('subsReady' of @partialState) and @partialState.subsReady is false
+              @setState({subsReady: false})
+              delete @partialState['subsReady']
+
           if (@initialState?.subsReady or @partialState.subsReady or @state?.subsReady) and (@partialState.subsReady isnt false)
-            # hold off on all rerenders while subscription waiting.
-            # this way we dont get a bunch od re-renders while subscriptions
-            # are coming in
+            # hold off on all rerenders while subscription waiting. this way we dont get 
+            # a bunch of re-renders while subscriptions are coming in
             @setState(@partialState)
             @partialState = {}
-
 
     # set initial state if there is something to set
     if Object.keys(@initialState).length > 0
