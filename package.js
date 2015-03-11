@@ -1,6 +1,6 @@
 Package.describe({
   name: "ccorcos:react-utils",
-  version: "0.0.5",
+  version: "0.0.6",
   summary: "React utils for Meteor",
   git: "https://github.com/ccorcos/meteor-react-utils",
 });

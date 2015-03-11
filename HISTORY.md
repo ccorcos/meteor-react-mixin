@@ -1,3 +1,7 @@
+# 0.0.6
+
+Changed `getMeteorSubs` so that you must return a ready function. This cleans up the code a bunch and allows for a cleaner separation of concerns. Its really convenient now to use subs-cache.
+
 # 0.0.5
 
 `getSessionVars` helper.
