@@ -16,7 +16,8 @@ React.createClassFactory
       _.pluck posts, '_id'
 
   getMeteorSubs: ->
-    Meteor.subscribe('posts', 10)
+    sub = Meteor.subscribe('posts', 10)
+    return () -> sub.ready()
 
   render: ->
     console.log "render Home"
