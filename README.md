@@ -23,7 +23,7 @@ getMeteorState: {
 }
 ```
 
-Another convenience of this mixin is `this.linkVar` which is similar to [`this.linkState`](http://facebook.github.io/react/docs/two-way-binding-helpers.html) except it links an input to a ReactiveVar. This allows you to pass a reactive var as props to multiple components and both could change and reactively update to that ReactiveVar without having to handle all the piping in their common ancestor.
+Another convenience of this mixin is `this.linkVar` which is similar to [`this.linkState`](http://facebook.github.io/react/docs/two-way-binding-helpers.html) except it links an input to a ReactiveVar. This allows you to pass a reactive var as props to multiple components and both could change and reactively update to that ReactiveVar without having to handle all the piping in their common ancestor. `linkVar` will force a re-render even if the state or props don't change.
 
 ```coffee
 React.createClassFactory
