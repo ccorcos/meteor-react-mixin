@@ -80,6 +80,7 @@ sessionVars = (obj) ->
     @vars[name] = @sessionVar(sessionString)
     
 startMeteorSubs = ->
+  @initialState?.subsReady = true
   if @getMeteorSubs
     # run in reactive computation to stop the subscription(s) when theyre done
     Tracker.autorun (c) =>
