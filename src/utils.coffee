@@ -1,5 +1,8 @@
-React.classes = {}
-React.factories = {}
+unless 'classes' of React
+  React.classes = {}
+
+unless 'factories' of React
+  React.factories = {}
 
 # render to body helper
 React.renderBody = (c) -> 
@@ -165,6 +168,9 @@ React.MeteorMixin =
       @computations.push(c)
       @updateState.depend()
       Tracker.afterFlush () =>
+        # sometimes this can happen after a component unmounts
+        if @_lifeCycleState is "UNMOUNTED" then return
+
         if Object.keys(@partialState).length > 0
           # if the subsReady turns false, we can update that
           # but we dont want to update anything else until subs are ready
