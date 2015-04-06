@@ -1,3 +1,4 @@
+
 unless 'classes' of React
   React.classes = {}
 

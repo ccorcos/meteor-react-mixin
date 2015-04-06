@@ -8,17 +8,17 @@ Package.describe({
 
 Package.onUse(function(api) {
   api.use([
-    "ccorcos:react@0.0.1",
+    "grove:react@0.1.1",
     "coffeescript@1.0.5",
     "reactive-var@1.0.4"
   ]);
   api.imply([
-    "ccorcos:react",
+    "grove:react",
     "reactive-var"
-  ]);
+  ], 'client');
 
   api.addFiles([
     "src/utils.coffee",
     "src/components/InfiniteScroll.coffee"
-  ]);
+  ], 'client');
 });
