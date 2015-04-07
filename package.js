@@ -10,7 +10,8 @@ Package.onUse(function(api) {
   api.use([
     "grove:react@0.1.1",
     "coffeescript@1.0.5",
-    "reactive-var@1.0.4"
+    "reactive-var@1.0.4",
+    "meteorhacks:flow-router@1.1.3"
   ]);
   api.imply([
     "grove:react",
@@ -19,6 +20,7 @@ Package.onUse(function(api) {
 
   api.addFiles([
     "src/utils.coffee",
+    "src/router.coffee",
     "src/components/InfiniteScroll.coffee"
   ], 'client');
 });
