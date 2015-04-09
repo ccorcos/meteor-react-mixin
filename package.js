@@ -2,7 +2,7 @@ Package.describe({
   name: "ccorcos:react-meteor",
   version: "0.1.0",
   summary: "Meteor Mixin for React",
-  git: "https://github.com/ccorcos/meteor-react-meteor",
+  git: "https://github.com/ccorcos/meteor-react-mixin",
 });
 
 
