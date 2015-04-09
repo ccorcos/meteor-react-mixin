@@ -5,6 +5,9 @@
 @Router.current = null  # route name
 @Router.history = [{name:'/', args:[]}] # route history so we can call back()
 # create a route
+@Router.beforeHooks = []
+@Router.before = (func) ->
+  @beforeHooks.push(func)
 @Router.route = (name, renderFunc) ->
   # save the render function so we can do some fancy virtual DOM
   # animations later if we want.
@@ -12,6 +15,7 @@
   # wrap Flow Router
   self = this
   FlowRouter.route name,
+    middlewares: self.beforeHooks
     action: (args...) ->
       # if we are landing here for the first time
       # set the appropriate segue
