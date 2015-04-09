@@ -1,9 +1,5 @@
-Body = React.createFactory(Ionic.Body)
-Header = React.createFactory(Ionic.Header)
-Title = React.createFactory(Ionic.Title)
-Content = React.createFactory(Ionic.Content)
 
-{h2, p} = React.DOM
+{h2, p, div} = React.DOM
 {PostList, TabBar} = React.factories
 
 React.createClassFactory
@@ -21,11 +17,8 @@ React.createClassFactory
 
   render: ->
     console.log "render Home"
-    (Body {},
-      (Header {position:'header', color: 'positive'},
-        (Title {}, 'Home')
-      )
-      (Content {header: true},
+    (div {},
+      (div {header: true},
         (PostList {postIds: @state.postIds})
       )
     )

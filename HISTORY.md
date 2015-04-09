@@ -1,3 +1,7 @@
+# 0.0.9
+
+Moved infinite scrolling to another package, ccorcos:react-infinite-scroll. Using grove:react to keep up with the latest version of react.
+
 # 0.0.6
 
 Changed `getMeteorSubs` so that you must return a ready function. This cleans up the code a bunch and allows for a cleaner separation of concerns. Its really convenient now to use subs-cache.

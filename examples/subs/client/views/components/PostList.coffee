@@ -1,6 +1,5 @@
 
-Item = React.createFactory(Ionic.Item)
-{h2, p} = React.DOM
+{div, h2, p} = React.DOM
 
 React.createClassFactory
   displayName: 'PostItem'
@@ -18,12 +17,11 @@ React.createClassFactory
 
   render: -> 
     console.log "PostItem render"
-    (Item {onClick: @props.onClick},
+    (div {onClick: @props.onClick},
       (h2 {}, @state.post.title)
       (p {}, @state.post.user.username)
     )
 
-List = React.createFactory(Ionic.List)
 {PostItem} = React.factories
 
 React.createClassFactory
@@ -36,8 +34,8 @@ React.createClassFactory
 
   render: -> 
     console.log "PostList render"
-    (List {}, 
+    (div {}, 
       (@props.postIds.map (postId) =>
-        (PostItem {key: postId, postId: postId, onClick: => @props.onClick(postId)})
+        (PostItem {key: postId, postId: postId, onClick: => @props.onClick?(postId)})
       )
     )

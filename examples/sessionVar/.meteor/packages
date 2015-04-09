@@ -6,10 +6,9 @@
 
 meteor-platform
 insecure
-ccorcos:react
-ccorcos:react-utils
 meteorhacks:flow-router
 anti:fake
 reactive-var
 autopublish
 coffeescript
+ccorcos:react-meteor

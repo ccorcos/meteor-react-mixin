@@ -1,8 +1,8 @@
 Package.describe({
-  name: "ccorcos:react-utils",
-  version: "0.0.8",
-  summary: "React utils for Meteor",
-  git: "https://github.com/ccorcos/meteor-react-utils",
+  name: "ccorcos:react-meteor",
+  version: "0.0.9",
+  summary: "Meteor Mixin for React",
+  git: "https://github.com/ccorcos/meteor-react-meteor",
 });
 
 
@@ -11,16 +11,11 @@ Package.onUse(function(api) {
     "grove:react@0.1.1",
     "coffeescript@1.0.5",
     "reactive-var@1.0.4",
-    "meteorhacks:flow-router@1.1.3"
   ]);
   api.imply([
     "grove:react",
     "reactive-var"
   ], 'client');
 
-  api.addFiles([
-    "src/utils.coffee",
-    "src/router.coffee",
-    "src/components/InfiniteScroll.coffee"
-  ], 'client');
+  api.addFiles(["src/utils.coffee"], 'client');
 });

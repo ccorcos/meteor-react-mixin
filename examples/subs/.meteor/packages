@@ -7,11 +7,9 @@
 meteor-platform
 insecure
 meteorhacks:flow-router
-ccorcos:react
-ccorcos:react-utils
-ccorcos:react-ionic
 accounts-password
 coffeescript
 anti:fake
 reywood:publish-composite
 meteorhacks:subs-manager
+ccorcos:react-meteor

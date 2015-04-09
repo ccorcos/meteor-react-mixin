@@ -1,11 +1,11 @@
-# React Meteor Utils
+# React Meteor
 
-This package contains a React Mixin and some utilies for using React with Meteor.
+
+A Meteor Mixin for React
 
 ## Getting Started
 
-    meteor add ccorcos:react
-    meteor add ccorcos:react-utils
+    meteor add ccorcos:react-meteor
 
 ## API
 
@@ -159,47 +159,6 @@ FlowRouter.route '/',
     Main = React.factories.Main
     React.renderBody Main()
 ```
-
-### InfiniteScroll
-
-This package also has a convenient infinitely scrolling component. Lets go through the props one by one.
-
-    items:         React.PropTypes.array.isRequired
-
-An array of items to render
-
-    renderItem:    React.PropTypes.func.isRequired
-
-A function that accepts one item and an onClick function and renders the item with the onClick prop hooked up.
-
-    renderItems:   React.PropTypes.func.isRequired
-
-A function that accepts an array of children and an onScroll function. It creates a scrollable div with a "scrollable" ref along with onScroll prop and renders the chilren inside.
-
-    renderEmpty:   React.PropTypes.func.isRequired
-    renderLoading: React.PropTypes.func
-
-Renders an empty / loading "item".
-
-    canLoadMore:   React.PropTypes.bool.isRequired
-
-If there are more items that can be loaded.
-
-    isLoading:     React.PropTypes.bool.isRequired
-
-If the subs aren't ready yet.
-
-    loadMore:      React.PropTypes.func
-
-A function to load more. Here its easiest to update a session variable that reactively updates the subscription.
-
-    onClick:       React.PropTypes.func
-
-If an item is clicked, this function is called with the item.
-
-    buffer:        React.PropTypes.number
-
-The number of pixels from the bottom when loadMore gets called.
 
 ## Examples
 
