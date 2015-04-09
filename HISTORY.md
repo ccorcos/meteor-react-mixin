@@ -1,6 +1,6 @@
 # 0.0.9
 
-Moved infinite scrolling to another package, ccorcos:react-infinite-scroll. Using grove:react to keep up with the latest version of react.
+Moved infinite scrolling to another package, ccorcos:react-infinite-scroll. Using grove:react to keep up with the latest version of react. Now React is client only. From now on, I will focus mainly on this mixin and other components and try to be agnostic of the react package thats being used. When someone supports client and server, we'll move to that.
 
 # 0.0.6
 
